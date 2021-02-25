@@ -651,7 +651,6 @@ func accountTrieCollector(tmpdir string) (*etl.Collector, trie.HashCollector2) {
 		}
 		assertSubset(hasTree, hasState)
 		assertSubset(hasHash, hasState)
-		fmt.Printf("collected: %x\n", keyHex)
 		newV = trie.MarshalTrieNode(hasState, hasTree, hasHash, hashes, nil, newV)
 		return collector.Collect(keyHex, newV)
 	}
