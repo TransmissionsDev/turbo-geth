@@ -102,6 +102,7 @@ func (s *SnapshotKV2) Begin(ctx context.Context) (Tx, error) {
 		return nil, err
 	}
 	return &sn2TX{
+		kv:        s,
 		dbTX:      dbTx,
 		snapshots: s.snapshots,
 		snTX:      map[string]Tx{},
@@ -114,6 +115,7 @@ func (s *SnapshotKV2) BeginRw(ctx context.Context) (RwTx, error) {
 		return nil, err
 	}
 	return &sn2TX{
+		kv:        s,
 		dbTX:      dbTx,
 		snapshots: s.snapshots,
 		snTX:      map[string]Tx{},
@@ -127,6 +129,7 @@ func (s *SnapshotKV2) AllBuckets() dbutils.BucketsCfg {
 var ErrUnavailableSnapshot = errors.New("unavailable snapshot")
 
 type sn2TX struct {
+	kv        *SnapshotKV2
 	dbTX      Tx
 	snapshots map[string]snapshotData
 	snTX      map[string]Tx
@@ -274,6 +277,30 @@ func (s *sn2TX) Commit(ctx context.Context) error {
 		defer s.snTX[i].Rollback()
 	}
 	return s.dbTX.Commit(ctx)
+}
+
+func (tx *sn2TX) CommitAndBegin(ctx context.Context) error {
+	_, readOnly := tx.dbTX.(RwTx)
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	var t Tx
+	var err error
+	if readOnly {
+		t, err = tx.kv.Begin(ctx)
+	} else {
+		t, err = tx.kv.BeginRw(ctx)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	*tx = *t.(*sn2TX)
+
+	return nil
 }
 
 func (s *sn2TX) Rollback() {

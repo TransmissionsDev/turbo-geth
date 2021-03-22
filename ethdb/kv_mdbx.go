@@ -658,6 +658,28 @@ func (tx *MdbxTx) Commit(ctx context.Context) error {
 	return nil
 }
 
+func (tx *MdbxTx) CommitAndBegin(ctx context.Context) error {
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	var t Tx
+	var err error
+	if tx.readOnly {
+		t, err = tx.db.Begin(ctx)
+	} else {
+		t, err = tx.db.BeginRw(ctx)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	*tx = *t.(*MdbxTx)
+
+	return nil
+}
+
 func (tx *MdbxTx) Rollback() {
 	if tx.db.env == nil {
 		return

@@ -639,6 +639,28 @@ func (tx *lmdbTx) Commit(ctx context.Context) error {
 	return nil
 }
 
+func (tx *lmdbTx) CommitAndBegin(ctx context.Context) error {
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	var t Tx
+	var err error
+	if tx.readOnly {
+		t, err = tx.db.Begin(ctx)
+	} else {
+		t, err = tx.db.BeginRw(ctx)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	*tx = *t.(*lmdbTx)
+
+	return nil
+}
+
 func (tx *lmdbTx) Rollback() {
 	if tx.db.env == nil {
 		return

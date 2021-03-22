@@ -128,6 +128,7 @@ type RwTx interface {
 	RwCursor(bucket string) RwCursor
 	RwCursorDupSort(bucket string) RwCursorDupSort
 
+	CommitAndBegin(ctx context.Context) error
 	IncrementSequence(bucket string, amount uint64) (uint64, error)
 }
 
