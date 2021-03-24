@@ -9,8 +9,10 @@ import (
 )
 
 // APIList describes the list of available RPC apis
-func APIList(db ethdb.Database, eth core.ApiBackend, filters *filters.Filters, cfg cli.Flags, customAPIList []rpc.API) []rpc.API {
+func APIList(kv ethdb.KV, eth core.ApiBackend, filters *filters.Filters, cfg cli.Flags, customAPIList []rpc.API) []rpc.API {
 	var defaultAPIList []rpc.API
+
+	db := ethdb.NewObjectDatabase(kv)
 
 	ethImpl := NewEthAPI(db, eth, cfg.Gascap, filters)
 	tgImpl := NewTgAPI(db)
