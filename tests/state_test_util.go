@@ -176,10 +176,16 @@ func (t *StateTest) RunNoVerify(ctx context.Context, subtest StateSubtest, db et
 		return nil, common.Hash{}, UnsupportedForkError{subtest.Fork}
 	}
 	vmconfig.ExtraEips = eips
-	block, _, err := t.genesis(config).ToBlock(db, false)
+	tx, err := db.Begin(context.Background(), ethdb.RW)
 	if err != nil {
 		return nil, common.Hash{}, UnsupportedForkError{subtest.Fork}
 	}
+	defer tx.Rollback()
+	block, _, err := t.genesis(config).ToBlock(tx, false)
+	if err != nil {
+		return nil, common.Hash{}, UnsupportedForkError{subtest.Fork}
+	}
+	tx.Rollback()
 
 	readBlockNr := block.Number().Uint64()
 	writeBlockNr := readBlockNr + 1
