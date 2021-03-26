@@ -30,7 +30,7 @@ import (
 	"time"
 
 	"github.com/holiman/uint256"
-	cli "github.com/urfave/cli"
+	"github.com/urfave/cli"
 
 	"github.com/ledgerwatch/turbo-geth/cmd/evm/internal/compiler"
 	"github.com/ledgerwatch/turbo-geth/cmd/utils"
@@ -139,11 +139,14 @@ func runCmd(ctx *cli.Context) error {
 	if ctx.GlobalString(GenesisFlag.Name) != "" {
 		gen := readGenesis(ctx.GlobalString(GenesisFlag.Name))
 		genesisConfig = gen
-		_, statedb, _ = gen.ToBlock(db, false /* history */)
+		var err error
+		_, statedb, err = gen.ToBlock(db, false /* history */)
+		if err != nil {
+			return err
+		}
 		chainConfig = gen.Config
 	} else {
-		tds := state.NewTrieDbState(common.Hash{}, db, 0)
-		statedb = state.New(tds)
+		statedb = state.New(state.NewDbStateReader(db))
 		genesisConfig = new(core.Genesis)
 	}
 	if ctx.GlobalString(SenderFlag.Name) != "" {

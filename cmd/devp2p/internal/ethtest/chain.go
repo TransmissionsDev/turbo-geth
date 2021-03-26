@@ -29,6 +29,7 @@ import (
 	"github.com/ledgerwatch/turbo-geth/core"
 	"github.com/ledgerwatch/turbo-geth/core/forkid"
 	"github.com/ledgerwatch/turbo-geth/core/types"
+	"github.com/ledgerwatch/turbo-geth/ethdb"
 	"github.com/ledgerwatch/turbo-geth/params"
 	"github.com/ledgerwatch/turbo-geth/rlp"
 )
@@ -132,8 +133,12 @@ func loadChain(chainfile string, genesis string) (*Chain, error) {
 	if err = json.Unmarshal(chainConfig, &gen); err != nil {
 		return nil, err
 	}
-	gblock, _, _ := gen.ToBlock(nil, false)
-
+	db := ethdb.NewMemDatabase()
+	defer db.Close()
+	gblock, _, err := gen.ToBlock(db, false)
+	if err != nil {
+		return nil, err
+	}
 	// Load chain.rlp.
 	fh, err := os.Open(chainfile)
 	if err != nil {
