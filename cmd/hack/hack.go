@@ -1278,7 +1278,7 @@ func testGetProof(chaindata string, address common.Address, rewind int, regen bo
 		"alloc", common.StorageSize(m.Alloc), "sys", common.StorageSize(m.Sys), "numGC", int(m.NumGC))
 
 	loader := trie.NewFlatDBTrieLoader("checkRoots")
-	if err := loader.Reset(unfurl, nil, nil, false); err != nil {
+	if err = loader.Reset(unfurl, nil, nil, false); err != nil {
 		panic(err)
 	}
 	_, err = loader.CalcTrieRoot(db, nil, nil)
@@ -1662,32 +1662,6 @@ func extractHeaders(chaindata string, blockStep uint64, blockTotal uint64, name 
 	return nil
 }
 
-func indexKeySizes(chaindata string) error {
-	db := ethdb.MustOpen(chaindata)
-	defer db.Close()
-	keySizes := make(map[int]int)
-	count := 0
-	if err1 := db.KV().View(context.Background(), func(tx ethdb.Tx) error {
-		c := tx.Cursor(dbutils.AccountsHistoryBucket)
-		// This is a mapping of contractAddress + incarnation => CodeHash
-		for k, _, err := c.First(); k != nil; k, _, err = c.Next() {
-			if err != nil {
-				return err
-			}
-			keySizes[len(k)]++
-			count++
-			if count%1000000 == 0 {
-				log.Info("Processed", "records", count)
-			}
-		}
-		return nil
-	}); err1 != nil {
-		return err1
-	}
-	fmt.Printf("Key sizes: %v\n", keySizes)
-	return nil
-}
-
 func extractBodies(chaindata string, block uint64) error {
 	db := ethdb.MustOpen(chaindata)
 	defer db.Close()
@@ -1832,9 +1806,6 @@ func main() {
 	if *action == "testRewind" {
 		testRewind(*chaindata, *block, *rewind)
 	}
-	if *action == "testResolve" {
-		testResolve(*chaindata)
-	}
 	if *action == "testBlockHashes" {
 		testBlockHashes(*chaindata, *block, common.HexToHash(*hash))
 	}
@@ -1935,11 +1906,6 @@ func main() {
 	if *action == "textInfo" {
 		sb := strings.Builder{}
 		if err := db.TextInfo(*chaindata, &sb); err != nil {
-			fmt.Printf("Error: %v\n", err)
-		}
-	}
-	if *action == "indexKeySizes" {
-		if err := indexKeySizes(*chaindata); err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
 	}
