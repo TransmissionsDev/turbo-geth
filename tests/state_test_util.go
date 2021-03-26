@@ -152,8 +152,8 @@ func (t *StateTest) Subtests() []StateSubtest {
 }
 
 // Run executes a specific subtest and verifies the post-state and logs
-func (t *StateTest) Run(ctx context.Context, subtest StateSubtest, db ethdb.Database, vmconfig vm.Config) (*state.IntraBlockState, error) {
-	state, root, err := t.RunNoVerify(ctx, subtest, db, vmconfig)
+func (t *StateTest) Run(ctx context.Context, subtest StateSubtest, vmconfig vm.Config) (*state.IntraBlockState, error) {
+	state, root, err := t.RunNoVerify(ctx, subtest, vmconfig)
 	if err != nil {
 		return state, err
 	}
@@ -170,31 +170,29 @@ func (t *StateTest) Run(ctx context.Context, subtest StateSubtest, db ethdb.Data
 }
 
 // RunNoVerify runs a specific subtest and returns the statedb and post-state root
-func (t *StateTest) RunNoVerify(ctx context.Context, subtest StateSubtest, db ethdb.Database, vmconfig vm.Config) (*state.IntraBlockState, common.Hash, error) {
+func (t *StateTest) RunNoVerify(ctx context.Context, subtest StateSubtest, vmconfig vm.Config) (*state.IntraBlockState, common.Hash, error) {
 	config, eips, err := GetChainConfig(subtest.Fork)
 	if err != nil {
 		return nil, common.Hash{}, UnsupportedForkError{subtest.Fork}
 	}
 	vmconfig.ExtraEips = eips
-	tx, err := db.Begin(context.Background(), ethdb.RW)
+	tmpdb := ethdb.NewMemDatabase()
+	block, _, err := t.genesis(config).ToBlock(tmpdb, false)
 	if err != nil {
 		return nil, common.Hash{}, UnsupportedForkError{subtest.Fork}
 	}
-	defer tx.Rollback()
-	block, _, err := t.genesis(config).ToBlock(tx, false)
-	if err != nil {
-		return nil, common.Hash{}, UnsupportedForkError{subtest.Fork}
-	}
-	tx.Rollback()
+	defer tmpdb.Close()
 
 	readBlockNr := block.Number().Uint64()
 	writeBlockNr := readBlockNr + 1
 	ctx = config.WithEIPsFlags(ctx, big.NewInt(int64(writeBlockNr)))
-	w := state.NewDbStateWriter(db, 0)
+	db := ethdb.NewMemDatabase()
+	defer db.Close()
 	statedb, err := MakePreState(context.Background(), db, t.json.Pre, readBlockNr)
 	if err != nil {
 		return nil, common.Hash{}, UnsupportedForkError{subtest.Fork}
 	}
+	w := state.NewDbStateWriter(db, 0)
 
 	post := t.json.Post[subtest.Fork][subtest.Index]
 	msg, err := t.json.Tx.toMessage(post)
@@ -233,6 +231,7 @@ func (t *StateTest) RunNoVerify(ctx context.Context, subtest StateSubtest, db et
 	if err = statedb.CommitBlock(ctx, w); err != nil {
 		return nil, common.Hash{}, err
 	}
+
 	root, err := trie.CalcRoot("test", db)
 	if err != nil {
 		return nil, common.Hash{}, fmt.Errorf("error calculating state root: %v", err)
@@ -245,7 +244,9 @@ func (t *StateTest) gasLimit(subtest StateSubtest) uint64 {
 }
 
 func MakePreState(ctx context.Context, db ethdb.Database, accounts core.GenesisAlloc, blockNr uint64) (*state.IntraBlockState, error) {
-	r, w := state.NewDbStateReader(db), state.NewDbStateWriter(db, 0)
+	tmpdb := ethdb.NewMemDatabase()
+	defer tmpdb.Close()
+	r, w := state.NewDbStateReader(tmpdb), state.NewDbStateWriter(tmpdb, 0)
 	statedb := state.New(r)
 	for addr, a := range accounts {
 		statedb.SetCode(addr, a.Code)
@@ -262,6 +263,7 @@ func MakePreState(ctx context.Context, db ethdb.Database, accounts core.GenesisA
 	if err := statedb.FinalizeTx(ctx, w); err != nil {
 		return nil, err
 	}
+
 	if err := statedb.CommitBlock(ctx, w); err != nil {
 		return nil, err
 	}

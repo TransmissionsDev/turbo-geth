@@ -26,7 +26,6 @@ import (
 	"testing"
 
 	"github.com/ledgerwatch/turbo-geth/core/vm"
-	"github.com/ledgerwatch/turbo-geth/ethdb"
 )
 
 var testVMConfig = vm.Config{}
@@ -76,9 +75,7 @@ func TestState(t *testing.T) {
 							return UnsupportedForkError{subtest.Fork}
 						}
 						ctx := config.WithEIPsFlags(context.Background(), big.NewInt(1))
-						db := ethdb.NewMemDatabase()
-						_, err := test.Run(ctx, subtest, db, vmconfig)
-						db.Close()
+						_, err := test.Run(ctx, subtest, vmconfig)
 						return st.checkFailure(t, err)
 					})
 				})
