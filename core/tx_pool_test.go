@@ -167,12 +167,6 @@ func deriveSender(tx *types.Transaction) (common.Address, error) {
 	return types.Sender(types.HomesteadSigner{}, tx)
 }
 
-type testChain struct {
-	*testBlockChain
-	address common.Address
-	trigger *bool
-}
-
 // This test simulates a scenario where a new block is imported during a
 // state reset and tests whether the pending state is in sync with the
 // block head event that initiated the resetState().

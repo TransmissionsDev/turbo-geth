@@ -1,41 +1,20 @@
 run:
   deadline: 10m
 
-linters:
-  disable-all: true
-  enable:
-    - deadcode
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - structcheck
-    - typecheck
-    - unused
-    - varcheck
-    - goconst
-    - gofmt
-    - golint
-    - interfacer
-    - stylecheck
-    - goerr113
-    - unconvert
-    - scopelint
-    - nakedret
-    - prealloc
-    - gosec
-    - misspell
-
 linters-settings:
   govet:
     check-shadowing: true
     enable-all: true
+    disable:
+      - unsafeptr
   goconst:
     min-len: 2
     min-occurrences: 2
   gofmt:
     auto-fix: false
+  staticcheck:
+    disable:
+      - SA1019
 
 issues:
   exclude:

@@ -39,22 +39,6 @@ type revision struct {
 	journalIndex int
 }
 
-var (
-	// emptyState is the known hash of an empty state trie entry.
-	emptyState = crypto.Keccak256Hash(nil)
-
-	// emptyCode is the known hash of the empty EVM bytecode.
-	// DESCRIBED: docs/programmers_guide/guide.md#code-hash
-	emptyCode = crypto.Keccak256Hash(nil)
-)
-
-type proofList [][]byte
-
-func (n *proofList) Put(key []byte, value []byte) error {
-	*n = append(*n, value)
-	return nil
-}
-
 type StateTracer interface {
 	CaptureAccountRead(account common.Address) error
 	CaptureAccountWrite(account common.Address) error

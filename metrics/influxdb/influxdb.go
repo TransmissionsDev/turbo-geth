@@ -5,9 +5,9 @@ import (
 	uurl "net/url"
 	"time"
 
+	"github.com/influxdata/influxdb/client"
 	"github.com/ledgerwatch/turbo-geth/log"
 	"github.com/ledgerwatch/turbo-geth/metrics"
-	"github.com/influxdata/influxdb/client"
 )
 
 type reporter struct {
@@ -98,8 +98,8 @@ func (r *reporter) makeClient() (err error) {
 }
 
 func (r *reporter) run() {
-	intervalTicker := time.Tick(r.interval)
-	pingTicker := time.Tick(time.Second * 5)
+	intervalTicker := time.NewTicker(r.interval).C
+	pingTicker := time.NewTicker(time.Second * 5).C
 
 	for {
 		select {

@@ -1687,7 +1687,7 @@ func doModesTest(history, preimages, receipts, txlookup bool) error {
 		err := db.Walk(bucketName, nil, 0, func(k, v []byte) (bool, error) {
 			// we ignore empty account history
 			//nolint:scopelint
-			if bucketName == string(dbutils.AccountsHistoryBucket) && len(v) == 0 {
+			if bucketName == dbutils.AccountsHistoryBucket && len(v) == 0 {
 				return true, nil
 			}
 
@@ -1698,12 +1698,12 @@ func doModesTest(history, preimages, receipts, txlookup bool) error {
 			return err
 		}
 
-		if bucketName == string(dbutils.BlockReceiptsPrefix) {
+		if bucketName == dbutils.BlockReceiptsPrefix {
 			// we will always have a receipt for genesis
 			numberOfEntries--
 		}
 
-		if bucketName == string(dbutils.PreimagePrefix) {
+		if bucketName == dbutils.PreimagePrefix {
 			// we will always have 2 preimages because core.GenerateChain interface does not
 			// allow us to set it to ignore them
 			// but if the preimages are enabled in BlockChain, we will have more than 2.

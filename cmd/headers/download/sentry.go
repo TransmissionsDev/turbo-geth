@@ -163,10 +163,6 @@ func makeP2PServer(
 	return &p2p.Server{Config: p2pConfig}, nil
 }
 
-func errResp(code int, format string, v ...interface{}) error {
-	return fmt.Errorf("%v - %v", code, fmt.Sprintf(format, v...))
-}
-
 func runPeer(
 	ctx context.Context,
 	peerHeightMap *sync.Map,

@@ -693,12 +693,12 @@ func (tds *TrieDbState) CalcTrieRoots(trace bool) (common.Hash, error) {
 	tds.tMu.Lock()
 	defer tds.tMu.Unlock()
 
-	// Retrive the list of inserted/updated/deleted storage items (keys and values)
+	// Retrieve the list of inserted/updated/deleted storage items (keys and values)
 	storageKeys, sValues := tds.buildStorageWrites()
 	if trace {
 		fmt.Printf("len(storageKeys)=%d, len(sValues)=%d\n", len(storageKeys), len(sValues))
 	}
-	// Retrive the list of inserted/updated/deleted accounts (keys and values)
+	// Retrieve the list of inserted/updated/deleted accounts (keys and values)
 	accountKeys, aValues, aCodes := tds.buildAccountWrites()
 	if trace {
 		fmt.Printf("len(accountKeys)=%d, len(aValues)=%d\n", len(accountKeys), len(aValues))
@@ -871,7 +871,7 @@ func (tds *TrieDbState) UnwindTo(blockNr uint64) error {
 		}
 		var key = append(addrHash[:], []byte(plainKey)[common.AddressLength:]...)
 		var keyHash common.Hash
-		copy(keyHash[:], []byte(key)[common.HashLength+common.IncarnationLength:])
+		copy(keyHash[:], key[common.HashLength+common.IncarnationLength:])
 		m, ok := b.storageUpdates[addrHash]
 		if !ok {
 			m = make(map[common.Hash][]byte)
@@ -879,7 +879,7 @@ func (tds *TrieDbState) UnwindTo(blockNr uint64) error {
 		}
 		b.storageIncarnation[addrHash] = binary.BigEndian.Uint64(key[common.HashLength:])
 		var storageKey common.StorageKey
-		copy(storageKey[:], []byte(key))
+		copy(storageKey[:], key)
 		b.storageReads[storageKey] = struct{}{}
 		if len(value) > 0 {
 			m[keyHash] = value
@@ -1149,8 +1149,6 @@ func (tds *TrieDbState) ReadAccountIncarnation(address common.Address) (uint64, 
 		return 0, err
 	}
 }
-
-var prevMemStats runtime.MemStats
 
 type TrieStateWriter struct {
 	tds *TrieDbState

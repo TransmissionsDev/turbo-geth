@@ -31,10 +31,6 @@ import (
 	"github.com/ledgerwatch/turbo-geth/turbo/trie"
 )
 
-type trieHasher interface {
-	GetTrieHash() common.Hash
-}
-
 type Dumper struct {
 	blockNumber uint64
 	db          ethdb.Tx
